@@ -1,0 +1,19 @@
+# Metadata (Pretty self-explanatory)
+# Doesn't do anything functionally, just looks cool :P
+[meta]
+name = "My Application"
+description = "Very cool application"
+version = "1.0"
+
+# Executable data
+[exec]
+# Binary name/path, %variables% or @appname
+bin = "bash"
+# Command-line arguments
+# You must include "%!" in the arguments list where you want all the command-line arguments (and/or derivative applications' arguments) to go to.
+args = ["%!"]
+
+# Environment variables for this application.
+# Example:
+# MANGOHUD = 1
+[env]

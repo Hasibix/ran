@@ -1,0 +1,29 @@
+# Global configuration file
+# This file stores general configuration for RAN, along with your global variables, environment overrides and aliases.
+# Also you CAN'T use variables here.
+
+# Whether to ask for interactive prompt on conflicting app query (e.g. if query can refer to 2 or more apps)
+# Set to false if you want it to fail-fast on conflict without showing a dialogue/prompt.
+interactive = true
+# Terminal runner for running an app in background.
+# Set to "sh %! &" (or "cmd /k %!" on Windows) if you don't prefer opening a new terminal window.
+terminal_runner = "alacritty -e %!"
+
+# Aliases for your applications.
+# Example:
+# hks = "games/silksong"
+# song = "silksong"
+# ss = "hks" -- yes, you can use aliases to refer to aliases.
+[alias]
+
+# Global variables for your applications. (Not environment variables. These are meant to be used in app definition files.)
+# Example:
+# gamepath = "/data/apps/games"
+# Now you can use %gamepath% anywhere in your application definition file to refer to this variable.
+[vars]
+
+# Global environment variable overrides. (Global meaning this applies to all apps. Can be overriden
+#   by specific apps, but not command line environment)
+# Example:
+# WINEPREFIX = "/data/apps/.prefixes/wine_common"
+[env]
