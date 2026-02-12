@@ -1,29 +1,29 @@
-# Global configuration file
-# This file stores general configuration for RAN, along with your global variables, environment overrides and aliases.
-# Also you CAN'T use variables here.
+# global configuration file
+# this file stores general configuration for ran, along with your global variables, environment overrides and aliases.
+# also you CAN'T use variables here.
 
-# Whether to ask for interactive prompt on conflicting app query (e.g. if query can refer to 2 or more apps)
-# Set to false if you want it to fail-fast on conflict without showing a dialogue/prompt.
+# whether to ask for interactive prompt on conflicting app query (e.g. if query can refer to 2 or more apps)
+# set to false if you want it to fail-fast on conflict without trying to show a dialogue/prompt.
 interactive = true
-# Terminal runner for running an app in background.
-# Set to "sh %! &" (or "cmd /k %!" on Windows) if you don't prefer opening a new terminal window.
-terminal_runner = "alacritty -e %!"
+# the text editor of your choice. this is used for editing app definition files and the config file itself.
+# you can remove this or comment it out to let ran use $EDITOR, $VISUAL or nano/notepad if those are not set.
+# editor = "nano"
 
-# Aliases for your applications.
-# Example:
+# aliases for your applications.
+# example:
 # hks = "games/silksong"
 # song = "silksong"
 # ss = "hks" -- yes, you can use aliases to refer to aliases.
 [alias]
 
-# Global variables for your applications. (Not environment variables. These are meant to be used in app definition files.)
-# Example:
+# custom variables for your applications. (not environment variables. these are meant to be used in app definition files.)
+# example:
 # gamepath = "/data/apps/games"
-# Now you can use %gamepath% anywhere in your application definition file to refer to this variable.
+# now you can use %gamepath% anywhere in your application definition file to refer to this variable.
 [vars]
 
-# Global environment variable overrides. (Global meaning this applies to all apps. Can be overriden
-#   by specific apps, but not command line environment)
-# Example:
+# global environment variable overrides. (Global meaning this applies to all apps. can be overriden
+# by specific apps, but not command line environment)
+# example:
 # WINEPREFIX = "/data/apps/.prefixes/wine_common"
 [env]

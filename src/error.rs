@@ -1,11 +1,9 @@
 #![allow(dead_code)]
 
-// Imports
-
+// --- imports ---
 use std::fmt;
 
-// Definitions
-
+// --- definitions ---
 pub type LE = LauncherError;
 pub type Err<T> = Result<T, LauncherError>;
 
@@ -27,36 +25,35 @@ pub enum LauncherError {
 	Other(String),
 }
 
-// Implementations
-
+// --- implementations ---
 impl fmt::Display for LauncherError {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			Self::InvalidAlias(alias, target) => write!(f, "Invalid alias {alias} -> {target}"),
+			Self::InvalidAlias(alias, target) => write!(f, "invalid alias {alias} -> {target}"),
 			Self::InvalidConfig(reason) => {
-				write!(f, "Invalid config")?;
+				write!(f, "invalid config")?;
 				if let Some(r) = reason {
 					write!(f, " -- {r}")?;
 				}
 				Ok(())
 			}
 			Self::InvalidApp(path, reason) => {
-				write!(f, "Invalid app definition in {path}")?;
+				write!(f, "invalid app definition in {path}")?;
 				if let Some(r) = reason {
 					write!(f, " -- {r}")?;
 				}
 				Ok(())
 			}
-			Self::ConfigNotFound(path) => write!(f, "Config file not found in {path}"),
-			Self::AppNotFound(name) => write!(f, "App definition not found for {name}"),
-			Self::AliasNotFound(name) => write!(f, "Alias \"{name}\" was not found"),
-			Self::CircularAlias(c) => write!(f, "Infinite recursion in alias expansion: {}", c.join(" -> ")),
-			Self::IoError(e) => write!(f, "IO error: {}", e),
-			Self::DialoguerError(e) => write!(f, "Dialoguer error: {}", e),
-			Self::ParseError(e) => write!(f, "Parse error: {}", e),
-			Self::SerializationError(e) => write!(f, "Serialization error: {}", e),
-			Self::AmbiguousQuery(q, m) => write!(f, "Multiple results for query \"{}\": {}", q, m.join(", ")),
-			Self::NoCommandGiven => write!(f, "No command was supplied"),
+			Self::ConfigNotFound(path) => write!(f, "config file not found in {path}"),
+			Self::AppNotFound(name) => write!(f, "app definition not found for {name}"),
+			Self::AliasNotFound(name) => write!(f, "alias \"{name}\" was not found"),
+			Self::CircularAlias(c) => write!(f, "infinite recursion in alias expansion: {}", c.join(" -> ")),
+			Self::IoError(e) => write!(f, "io error: {}", e),
+			Self::DialoguerError(e) => write!(f, "dialoguer error: {}", e),
+			Self::ParseError(e) => write!(f, "parse error: {}", e),
+			Self::SerializationError(e) => write!(f, "serialization error: {}", e),
+			Self::AmbiguousQuery(q, m) => write!(f, "multiple results for query \"{}\": {}", q, m.join(", ")),
+			Self::NoCommandGiven => write!(f, "no command was supplied"),
 			Self::Other(msg) => write!(f, "{msg}"),
 		}
 	}
@@ -69,17 +66,6 @@ impl std::error::Error for LauncherError {
 			Self::DialoguerError(e) => Some(e),
 			Self::ParseError(e) => Some(e),
 			_ => None,
-		}
-	}
-}
-
-impl From<&(dyn std::error::Error + 'static)> for LauncherError {
-	fn from(err: &(dyn std::error::Error + 'static)) -> Self {
-		// check if it’s an IoError
-		if let Some(toml_err) = err.downcast_ref::<toml::de::Error>() {
-			LauncherError::ParseError(toml_err.clone())
-		} else {
-			LauncherError::Other(format!("{}", err))
 		}
 	}
 }

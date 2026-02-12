@@ -1,3 +1,12 @@
+# .rustfmt.toml
+max_width = 80
 hard_tabs = true
 tab_spaces = 4
-
+trailing_comma = "Always"
+format_macro_matchers = true
+blank_lines_upper_bound = 1
+struct_field_align_threshold = 0
+brace_style = "AlwaysNextLine"
+single_line_if_else = false
+reorder_imports = false
+fn_single_line = false

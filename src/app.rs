@@ -1,18 +1,15 @@
 #![allow(dead_code)]
 
-// Imports
-
+// --- imports ---
 use std::fmt::{Display, Formatter, Result};
+use indexmap::IndexMap;
 use serde::{ Serialize, Deserialize };
 use walkdir::WalkDir;
-use crate::{error::{Err, LE}, helpers::sandwich_args, launcher::{Launcher, ResolvedParts}};
+use crate::{error::{Err, LE}, utils::{generate_rows, make_box, sandwich_args}, launcher::{Launcher, ResolvedParts}};
 use std::{collections::HashMap, path::PathBuf};
-use comfy_table::modifiers::UTF8_ROUND_CORNERS;
-use comfy_table::presets::UTF8_FULL_CONDENSED;
-use comfy_table::*;
+use colored::*;
 
-// Definitions
-
+// --- definitions ---
 #[derive(Serialize, Deserialize)]
 pub struct App {
 	pub meta: Option<Meta>,
@@ -33,58 +30,74 @@ pub struct Exec {
 	pub args: Vec<String>,
 }
 
-// Implementations
-
+// --- implementations ---
 impl Display for App {
 	fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-		let mut table = Table::new();
+		let mut sections: IndexMap<String, IndexMap<String, String>> = IndexMap::new();
 
-		// 1. Setup Table Styling
-		table
-		.load_preset(UTF8_FULL_CONDENSED)
-		.apply_modifier(UTF8_ROUND_CORNERS)
-		.set_content_arrangement(ContentArrangement::Dynamic); // THIS IS THE MAGIC
-		// It auto-detects terminal width and wraps text to fit!
-
-		// 2. Add Meta Information
+		// --- metadata ---
 		if let Some(meta) = &self.meta {
-			table.add_row(vec![
-				Cell::new("Application").add_attribute(Attribute::Bold),
-						  Cell::new(meta.name.as_deref().unwrap_or("Unknown")),
-			]);
+			let mut meta_map = IndexMap::new();
+
+			let name = meta.name.as_deref().unwrap_or("Unspecified");
+			let version = meta.version.as_deref().unwrap_or("Unspecified");
+
+			meta_map.insert("Name".bright_yellow().to_string(), name.into());
+			meta_map.insert("Version".bright_yellow().to_string(), version.into());
 			if let Some(desc) = &meta.description {
-				table.add_row(vec!["Description", desc]);
+				meta_map.insert("Description".bright_yellow().to_string(), desc.into());
 			}
+
+			sections.insert(format!("{}", "Metadata".bright_yellow().bold()), meta_map);
 		}
 
-		// 3. Execution Section
-		table.add_row(vec![
-			Cell::new("Executable").fg(Color::Green),
-					  Cell::new(&self.exec.bin),
-		]);
+		// --- execution ---
+		let mut exec_map = IndexMap::new();
+		exec_map.insert("Exectuable".bright_green().to_string(), self.exec.bin.clone());
 
-		let args = if self.exec.args.is_empty() {
-			"(none)".to_string()
-		} else {
-			self.exec.args.join(" ")
-		};
-		table.add_row(vec!["Arguments", &args]);
+		if !self.exec.args.is_empty() {
+			exec_map.insert(
+				"Arguments".bright_green().to_string(),
+				self.exec.args
+				.iter()
+				.map(|a| {
+					if a.contains(' ') || a.contains('"') {
+						format!("\"{}\"", a.replace('"', "\\\""))
+					} else {
+						a.clone()
+					}
+				})
+				.collect::<Vec<_>>()
+				.join(" ")
+			);
+		}
 
-		// 4. Local Environment
+		sections.insert(format!("{}", "Execution".bright_green().bold()), exec_map);
+
+		// --- local environment ---
+		let mut env_map = IndexMap::new();
 		if let Some(env) = &self.env {
+			if env.is_empty() {
+				env_map.insert("(no local environment overrides provided)".bright_blue().to_string(), "".into());
+			}
 			for (name, value) in env {
-				table.add_row(vec![
-					Cell::new(format!("${}", name)).fg(Color::Yellow),
-							  Cell::new(value)
-				]);
+				env_map.insert(format!("${}", name).bright_blue().to_string(), value.clone());
 			}
 		}
+		if !env_map.is_empty() {
+			sections.insert(format!("{}", "Local Environment".bright_blue().bold()), env_map);
+		}
 
-		write!(f, "{}", table)
+		// generate rows and make box
+		let rows = generate_rows(sections);
+		make_box(f, "App Info", rows)?;
+
+		Ok(())
 	}
 }
 
 impl App {
+	/// finds all app definitions in {root_path}/apps and returns a map of app name -> path to definition
 	pub fn find_all(root_path: &PathBuf) -> HashMap<String, PathBuf> {
 		let mut apps = HashMap::new();
 		let apps_dir = root_path.join("apps");
@@ -93,31 +106,31 @@ impl App {
 			return apps;
 		}
 
-		// Walk through the apps directory
+		// walk through the apps directory
 		for entry in WalkDir::new(apps_dir)
-			.min_depth(1) // Don't include the apps folder itself
+			.min_depth(1) // don't include the apps folder itself
 			.into_iter()
 			.filter_map(|e| e.ok())
 			{
 				let path = entry.path();
 
-				// 1. Only care about .toml files
+				// only care about .toml files
 				if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("toml") {
 
-					// 2. Sanitize the Name/Key
-					// We want the path relative to the "apps" folder, without the .toml
+					// sanitize the name/key
+					// we want the path relative to the "apps" folder, without the .toml
 					// e.g., "apps/games/doom.toml" -> "games/doom"
 					if let Ok(relative_path) = path.strip_prefix(&root_path.join("apps")) {
 						let mut name = relative_path.to_string_lossy().to_string();
 
-						// Remove .toml extension
+						// remove .toml extension
 						if name.ends_with(".toml") {
 							name.truncate(name.len() - 5);
 						}
 
-						// 3. Normalize slashes and trim
+						// normalize slashes and trim
 						let sanitized_name = name
-						.replace('\\', "/") // Ensure cross-platform consistency
+						.replace('\\', "/") // ensure cross-platform consistency
 						.trim_matches('/')
 						.to_string();
 
@@ -128,31 +141,32 @@ impl App {
 			apps
 	}
 
+	/// resolves the app's executable, arguments, and environment variables, including any nested runners (if the executable starts with '@')
 	pub fn resolve_recursive(&self, launcher: &Launcher) -> Err<ResolvedParts> {
 		let mut parts = if self.exec.bin.starts_with('@') {
 			if self.exec.bin.len() < 2 {
-				return Err(LE::InvalidApp("".into(), Some("App name cannot be empty!".into())));
+				return Err(LE::InvalidApp("".into(), Some("app name cannot be empty!".into())));
 			}
 			let runner_name = &self.exec.bin[1..];
 			let runner_app = launcher.load_app(runner_name)?;
 			runner_app.resolve_recursive(launcher)
 		} else {
-			// Base case: No more runners
+			// base case: no more runners
 			Ok(ResolvedParts {
 				bin: self.exec.bin.clone(),
-			   args: Vec::new(),
-			   env: HashMap::new(),
+				args: Vec::new(),
+				env: HashMap::new(),
 			})
 		}?;
 
-		// 2. Handle args
+		// handle args
 		if !parts.args.is_empty() {
 			parts.args = sandwich_args(parts.args, self.exec.args.clone());
 		} else {
 			parts.args = self.exec.args.clone();
 		}
 
-		// 3. Merge env
+		// merge env overrides
 		if let Some(e) = &self.env {
 			parts.env.extend(e.clone());
 		}

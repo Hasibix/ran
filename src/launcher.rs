@@ -1,18 +1,16 @@
 #![allow(dead_code)]
 
-// Imports
-
+// --- imports ---
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 use crate::app::App;
 use crate::config::Config;
 use crate::error::{Err, LE};
-use crate::helpers::{app_resolver, sandwich_args, expand_vars};
+use crate::utils::{app_resolver, sandwich_args, expand_vars};
 
-// Definitions
-
+// --- definitions ---
 pub struct ResolvedParts {
 	pub bin: String,
 	pub args: Vec<String>,
@@ -24,14 +22,14 @@ pub struct Launcher {
 	pub config: Config,
 }
 
-// Implementations
-
+// --- implementations ---
 impl Launcher {
+	/// resolves alias chain, and errors on circular references, returning the full chain for better error messages
 	pub fn resolve_alias_chain(&self, start_key: &str) -> Err<Vec<String>> {
 		let mut chain = vec![start_key.to_string()];
 		let mut current = start_key;
 
-		// Keep looking up while the value exists in the alias map
+		// keep looking up while the value exists in the alias map
 		// and avoid infinite loops
 		while let Some(next) = &self.config.alias.get(current) {
 			if chain.contains(next) {
@@ -44,6 +42,7 @@ impl Launcher {
 		Ok(chain)
 	}
 
+	/// (private) finds app from query with stack tracking
 	fn find_app_inner(&self, query: &str, stack: Vec<String>) -> Err<&PathBuf> {
 		if stack.contains(&query.into()) {
 			let mut stack = stack;
@@ -77,21 +76,25 @@ impl Launcher {
 		}
 	}
 
+	/// finds app from query, resolving aliases, and errors on circular references
 	pub fn find_app(&self, query: &str) -> Err<&PathBuf> {
 		self.find_app_inner(query, vec![])
 	}
 
+	/// loads app from query, resolving aliases, and errors on circular references
 	pub fn load_app(&self, query: &str) -> Err<App> {
 		let path = self.find_app(query)?;
 		let content = std::fs::read_to_string(path)?;
 		Ok(toml::from_str(&content)?)
 	}
 
+	/// loads app from path, without resolving aliases
 	pub fn load_app_from(&self, path: &PathBuf) -> Err<App> {
 		let content = std::fs::read_to_string(path)?;
 		Ok(toml::from_str(&content)?)
 	}
 
+	/// initializes launcher by scanning for apps and loading config
 	pub fn init(path: &PathBuf) -> Err<Launcher> {
 		let apps = App::find_all(path);
 
@@ -105,26 +108,29 @@ impl Launcher {
 		})
 	}
 
+	/// launches an app by query with cli args and env, resolving aliases, and errors on circular references
 	pub fn launch_app(
 		&self,
-		name: &str,
+		query: &str,
 		cli_args: Vec<String>,
 		cli_env: HashMap<String, String>,
 		background: bool
 	) -> Err<()> {
-		// 1. Resolve @chain
-		let target_app = self.load_app(name)?;
+		// 1. resolve @chain
+		let path = self.find_app(query)?;
+		let name = self.apps.iter().find(|(_, p)| *p == path).map(|(n, _)| n).ok_or(LE::AppNotFound(query.into()))?;
+		let target_app = self.load_app_from(path)?;
 		let parts = target_app.resolve_recursive(self)?;
 
-		// 2. Sandwich args (%! replacement)
+		// 2. sandwich args (%! replacement)
 		let intermediate_args = sandwich_args(parts.args, cli_args);
 
-		// 3. Layer Envs
+		// 3. layer envs
 		let mut final_env = cli_env;
 		final_env.extend(self.config.env.clone());
 		final_env.extend(parts.env);
 
-		// 4. Resolve %vars% (Only on what we are about to use)
+		// 4. resolve %vars% (only on what we are about to use)
 		let final_bin = expand_vars(&parts.bin, self);
 
 		let final_args: Vec<String> = intermediate_args.into_iter()
@@ -135,39 +141,24 @@ impl Launcher {
 		.map(|(k, v)| (k, expand_vars(&v, self)))
 		.collect();
 
-		// 5. Build and Launch
-
+		// 5. build and launch
 		if background {
-			let (term, args) = if let Some((term, args)) = self.config.terminal_runner.split_once(' ') {
-				(term.to_string(), args.to_string())
-			} else {
-				(self.config.terminal_runner.clone(), String::new())
-			};
-			if args.matches("%!").count() != 1 {
-				return Err(LE::InvalidConfig(Some("Expected one \"%!\" in config.terminal_runner".into())))
-			}
-			let t_args_vec: Vec<String> = args
-			.split(' ')
-			.filter(|s| !s.is_empty()) // Clean up extra spaces
-			.map(|s| s.to_string())
-			.collect();
-
-			let mut command_to_run = vec![final_bin]; // Start with the binary
-			command_to_run.extend(final_args);
-
-			let mut cmd = Command::new(term);
-			cmd.args(sandwich_args(t_args_vec, command_to_run)).envs(final_env);
-			// "Fire and Forget"
-			cmd.spawn()?;
-			println!("🚀 Launched {} in background in default terminal.", name);
+			let mut cmd = Command::new(final_bin);
+			cmd.args(final_args)
+				.stdin(Stdio::null())
+				.stdout(Stdio::null())
+				.stderr(Stdio::null());
+			// spawn and immediately forget
+			let _ = cmd.spawn();
+			println!("launched app {} in background!", name);
 		} else {
 			let mut cmd = Command::new(final_bin);
 			cmd.args(final_args).envs(final_env);
-			// Wait for exit
-			println!("🚀 Launching app {}...", name);
+			// wait for exit
+			println!("launching app {}...", name);
 			let status = cmd.status()?;
 			if !status.success() {
-				eprintln!("⚠️ Process exited with: {}", status);
+				eprintln!("process exited with: {}", status);
 			}
 		}
 		Ok(())

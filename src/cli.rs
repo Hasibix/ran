@@ -1,13 +1,14 @@
-// Imports
-
+// --- imports ---
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-// Definitions
-
-/// RAN - Run Anything Now
+// --- definitions ---
+/// ran - run anything now
 ///
-/// A simple but highly customizable command-line app for games and programs.
+/// a simple but customizable command-line launcher for games and programs.
+/// 
+/// copyright (c) 2026 Hasibix Hasi.
+/// licensed under Apache 2.0.
 #[derive(Parser)]
 #[command(
 	author,
@@ -20,8 +21,8 @@ pub struct Cli {
 	#[arg(
 		long,
 		env = "RANCFG",
-		help = "Defaults to $XDG_CONFIG_HOME/ran or $HOME/.config/ran",
-		long_help = "Path for config files (e.g. general config or app list)",
+		help = "defaults to $XDG_CONFIG_HOME/ran or $HOME/.config/ran",
+		long_help = "path for config files (e.g. general config or app list)",
 	)]
 	pub config: Option<PathBuf>,
 
@@ -42,48 +43,51 @@ pub enum Command {
 	Var(VarCmd),
 }
 
-/// Launch an application (with arguments, if needed)
+/// launch an application (with arguments, if needed)
 #[derive(Parser)]
 pub struct LaunchCmd {
-	/// Application to be launched
+	/// application to be launched
 	pub app: String,
-	/// Arguments (redirected to application, used if needed)
+	/// arguments (redirected to application, used if needed)
 	pub args: Vec<String>,
-	/// Force launch (fails fast on issues)
+	/// force launch (fails fast on issues)
 	#[arg(short, long)]
 	pub force: bool,
-	/// Run the app in background (in a new terminal session)
+	/// run the app in background (in a new terminal session)
 	#[arg(short, long)]
 	pub background: bool,
 }
 
-/// Application management
+/// application management
 #[derive(Subcommand)]
 pub enum AppCmd {
 	Launch(LaunchCmd),
-	/// Pretty-prints all information about an application based on definition
+	/// pretty-prints all information about an application based on definition
 	Info {
 		app: String,
 	},
-	/// List all applications
+	/// lists all applications (defined in config_path/apps/)
 	List,
-	/// Edit the specified application's definition file in the current config directory (using $VISUAL or $EDITOR. Falls back to `nano` or `notepad` if they're not set)
+	/// opens the specified application's definition file using your preferred text editor. (config.editor or $VISUAL or $EDITOR, falls back to `nano`/`notepad` if none are set)
 	Edit {
 		app: String
 	},
-	/// Print the specified application's raw definition file in the current config directory (TOML)
+	/// prints the specified application's raw definition file (TOML)
 	Print {
 		app: String
 	},
-	/// Creates a dummy application file for your application name opens it with your text editor.
+	/// creates a dummy application file for your application name opens it with your text editor.
+	/// treats {app} as the full name of the app
 	Create {
 		app: String
 	},
-	/// Creates a dummy application
+	/// creates a dummy application
+	/// treats {app} as the full name of the app
 	New {
 		app: String
 	},
-	/// Deletes an application definition file (only definition (TOML) file, not the installed application)
+	/// deletes an application definition file (only definition (TOML) file, not the installed application).
+	/// requires full path to the app (e.g. "games/silksong")
 	Delete {
 		app: String,
 		#[arg(short='y', long="yes")]
@@ -91,68 +95,68 @@ pub enum AppCmd {
 	},
 }
 
-/// Global configuration management
+/// global configuration management
 #[derive(Subcommand)]
 pub enum ConfigCmd {
-	/// Edit the current global configuration file in current config directory (using $VISUAL or $EDITOR. Falls back to `nano` if they're not set)
+	/// opens the current global configuration file using your preferred text editor. (config.editor or $VISUAL or $EDITOR, falls back to `nano`/`notepad` if none are set)
 	Edit,
-	/// Print the raw global configuration file in current config directory (TOML)
+	/// prints the raw global configuration file (TOML)
 	Print,
-	/// Prints the path currently being used as the config path
+	/// prints the path currently being used as the config path (aka where config.toml and apps/ are located)
 	Path,
-	/// Prints current config or the specified section or key
+	/// prints current config or the specified key
 	Get {
 		key: Option<String>
 	},
-	/// Set config
+	/// sets a config value (e.g. "editor" or "env.KEY")
 	Set {
 		key: String,
 		value: String,
 	},
-	/// Unsets a config value
+	/// unsets a config value
 	Unset {
 		key: String
 	},
-	// Pretty-prints the entire configuration data
-	List,
+	/// pretty-prints the entire configuration data
+	Info,
 }
 
-/// Alias management
+/// alias management
 #[derive(Subcommand)]
 pub enum AliasCmd {
-	/// Get the value of an alias
+	/// prints the value of an alias
 	Get {
 		alias: String
 	},
-	/// Set an alias
+	/// sets an app alias
 	Set {
 		alias: String,
 		value: String
 	},
-	/// Unset (remove) an alias
+	/// unsets (remove) an app alias
 	Unset {
 		alias: String
 	},
-	/// List all aliases
+	/// lists all app aliases
 	List,
 }
 
-/// Global variables management
+/// global variables management
 #[derive(Subcommand)]
 pub enum VarCmd {
-	/// Get the value of a variable
+	/// prints the value of a variable
 	Get {
 		key: String
 	},
-	/// Set a variable (accessible via %config.vars.KEY%)
+	/// sets a variable (accessible via %config.vars.key% or %key%)
 	Set {
 		key: String,
 		value: String
 	},
-	/// Remove a variable
+	/// removes a variable
 	Unset {
 		key: String
 	},
-	/// List all custom variables
+	/// lists all custom variables
 	List,
 }
