@@ -12,6 +12,8 @@ ran (pronounced "rAen"), short for "Run Anything Now", is a command-line launche
 - Cross-platform support (Windows, macOS, Linux)
 - Application aliases (and aliases for aliases)
 - Config directory override (using $RANCFG)
+- Deriving other application definitions (using @name_alias_or_fullname in exec.bin)
+
   etc.
 
 ## Installation
@@ -20,7 +22,7 @@ Since ran is a single executable, you can just download it from the [releases pa
 
 Or you can skip adding it to PATH and just use from the directory you downloaded it into.
 
-Alternatively, you can clone this repository using git and compile it yourself and install it by running:
+Alternatively, you can clone this repository using git then compile it yourself and install it by running:
 
 ```
 cargo install --path .
@@ -36,7 +38,7 @@ To use RAN, you need to create application definition files in the `apps` direct
 ran app create <full name for app, e.g. games/mygame>
 ```
 
-This should create a template app definition in <config location>/apps/<full name for app>.toml and open it inside your preferred text editor.
+This should create a template app definition in \<config location\>/apps/\<full name for app\>.toml and open it inside your preferred text editor.
 After you modify the template, save the file and exit. Now run:
 
 ```
