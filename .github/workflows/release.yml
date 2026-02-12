@@ -24,6 +24,13 @@ jobs:
         profile: minimal
         override: true
 
+    - name: Install 32-bit Linux build deps
+      if: matrix.target == 'i686-unknown-linux-gnu'
+      run: |
+        sudo dpkg --add-architecture i386
+        sudo apt update
+        sudo apt install -y gcc-multilib g++-multilib libc6-dev-i386
+
     - name: Install targets
       run: |
         rustup target add \
