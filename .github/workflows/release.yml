@@ -134,7 +134,14 @@ jobs:
               run: |
                   mkdir -p dist
                   for f in artifacts/*; do
-                    unzip -o "$f" -d dist
+                    case "$f" in
+                      *.zip)
+                        unzip -o "$f" -d dist ;;
+                      *.tar.gz)
+                        tar -xzf "$f" -C dist ;;
+                      *)
+                        echo "Skipping unknown file type: $f" ;;
+                    esac
                   done
 
             - name: Create GitHub Release
