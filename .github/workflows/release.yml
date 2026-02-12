@@ -80,7 +80,7 @@ jobs:
                           x86_64-pc-windows-msvc) ARCH="windows_x86_64" ;;
                           aarch64-pc-windows-msvc) ARCH="windows_aarch64" ;;
                         esac
-                        zip -j dist/${ARCH}.zip target/$t/release/$BIN
+                        powershell.exe -NoProfile -Command "Compress-Archive -Path 'target/$t/release/$BIN' -DestinationPath 'dist/${ARCH}.zip' -Force"
                         ;;
                       *unknown-linux-gnu)
                         BIN="$BIN_NAME"
