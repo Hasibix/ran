@@ -33,6 +33,7 @@ jobs:
 
             - name: Read version
               id: get_version
+              shell: bash
               run: |
                   VERSION=$(cat version.txt | tr -d " \n\r")
                   echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -46,24 +47,28 @@ jobs:
 
             - name: Install 32-bit Linux deps
               if: matrix.os == 'ubuntu-latest'
+              shell: bash
               run: |
                   sudo dpkg --add-architecture i386
                   sudo apt update
                   sudo apt install -y gcc-multilib g++-multilib libc6-dev-i386
 
             - name: Install Rust targets
+              shell: bash
               run: |
                   for t in ${{ join(matrix.targets, ' ') }}; do
                     rustup target add $t
                   done
 
             - name: Build targets
+              shell: bash
               run: |
                   for t in ${{ join(matrix.targets, ' ') }}; do
                     cargo build --release --target $t
                   done
 
             - name: Package artifacts
+              shell: bash
               run: |
                   mkdir -p dist
                   BIN_NAME=ran
