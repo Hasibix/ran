@@ -136,4 +136,4 @@ jobs:
                   bodyFile: changelog.md
                   draft: true
                   prerelease: false
-                  archives: "dist/*"
+                  artifacts: "dist/*"
