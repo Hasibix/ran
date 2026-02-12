@@ -13,7 +13,7 @@ jobs:
                     - os: ubuntu-latest
                       targets:
                           [
-                          		i686-unknown-linux-gnu,
+                              i686-unknown-linux-gnu,
                               x86_64-unknown-linux-gnu,
                           ]
                     - os: windows-latest
@@ -89,11 +89,13 @@ jobs:
                           x86_64-unknown-linux-gnu) ARCH="linux_x86_64" ;;
                           aarch64-unknown-linux-gnu) ARCH="linux_aarch64" ;;
                         esac
+                        chmod +x target/$t/release/$BIN
                         tar -czf dist/${ARCH}.tar.gz -C target/$t/release $BIN
                         ;;
                       *apple-darwin)
                         BIN="$BIN_NAME"
                         ARCH="macos_aarch64"
+                        chmod +x target/$t/release/$BIN
                         mkdir -p dmgroot
                         cp target/$t/release/$BIN dmgroot/
                         hdiutil create dist/${ARCH}.dmg -fs HFS+ -srcfolder dmgroot
@@ -104,7 +106,7 @@ jobs:
             - name: Upload artifacts
               uses: actions/upload-artifact@v6
               with:
-                  name: release-artifacts
+                  name: release-artifacts-${{ matrix.os }}
                   path: dist/*
 
     release:
@@ -123,8 +125,17 @@ jobs:
             - name: Download build artifacts
               uses: actions/download-artifact@v7
               with:
-                  name: release-artifacts
-                  path: dist
+                  pattern: release-artifacts-*
+                  merge-multiple: true
+                  path: artifacts
+
+            - name: Merge all OS artifacts
+              shell: bash
+              run: |
+                  mkdir -p dist
+                  for f in artifacts/*; do
+                    unzip -o "$f" -d dist
+                  done
 
             - name: Create GitHub Release
               id: create_release
