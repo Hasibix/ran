@@ -1,0 +1,79 @@
+name: Build and release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Read version
+      id: get_version
+      run: |
+        VERSION=$(cat version.txt | tr -d " \n\r")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: Install targets
+      run: |
+        rustup target add \
+          i686-unknown-linux-gnu \
+          x86_64-unknown-linux-gnu \
+          i686-pc-windows-msvc \
+          x86_64-pc-windows-msvc \
+          aarch64-unknown-linux-gnu \
+          aarch64-pc-windows-msvc \
+          aarch64-apple-darwin
+
+    - name: Build all targets
+      run: |
+        cargo build --release --target i686-unknown-linux-gnu
+        cargo build --release --target x86_64-unknown-linux-gnu
+        cargo build --release --target i686-pc-windows-msvc
+        cargo build --release --target x86_64-pc-windows-msvc
+        cargo build --release --target aarch64-unknown-linux-gnu
+        cargo build --release --target aarch64-pc-windows-msvc
+        cargo build --release --target aarch64-apple-darwin
+
+    - name: Package artifacts
+      id: package
+      run: |
+        mkdir -p dist
+
+        # Linux
+        tar -czf dist/linux_x86.tar.gz -C target/i686-unknown-linux-gnu/release ran
+        tar -czf dist/linux_x86_64.tar.gz -C target/x86_64-unknown-linux-gnu/release ran
+        tar -czf dist/linux_aarch64.tar.gz -C target/aarch64-unknown-linux-gnu/release ran
+
+        # Windows
+        zip -j dist/windows_x86.zip target/i686-pc-windows-msvc/release/ran.exe
+        zip -j dist/windows_x86_64.zip target/x86_64-pc-windows-msvc/release/ran.exe
+        zip -j dist/windows_aarch64.zip target/aarch64-pc-windows-msvc/release/ran.exe
+
+        # macOS dmg
+        mkdir -p dmgroot
+        cp target/aarch64-apple-darwin/release/ran dmgroot/
+        hdiutil create dist/macos_aarch64.dmg -fs HFS+ -srcfolder dmgroot
+
+        echo "artifacts=dist/linux_x86.tar.gz dist/linux_x86_64.tar.gz dist/linux_aarch64.tar.gz dist/windows_x86.zip dist/windows_x86_64.zip dist/windows_aarch64.zip dist/macos_aarch64.dmg" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ steps.get_version.outputs.version }}
+        release_name: ${{ steps.get_version.outputs.version }}
+        bodyFile: changelog.md
+        draft: true
+        artifacts: "dist/*"
+        prerelease: false
