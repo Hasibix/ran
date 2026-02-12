@@ -52,7 +52,7 @@ For more details, you can run `ran help` to get info about ran or a specific com
 # License
 
 ```
- 	 Copyright 2026 Hasibix Hasi
+   Copyright 2026 Hasibix Hasi
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
