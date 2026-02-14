@@ -24,6 +24,7 @@ mod utils;
 mod error;
 
 // --- imports ---
+use std::env;
 use std::path::PathBuf;
 use cli::*;
 use colored::Colorize;
@@ -44,11 +45,15 @@ fn main() {
 /// cli handling
 fn real_main() -> Err<()> {
 	let cli = Cli::parse();
-	let config_path = cli.config.unwrap_or(default_config_path()?);
+	let config_path = if let Some(c) = cli.config {
+		PathBuf::from(c)
+	} else {
+		default_config_path()?
+	};
 
 	if !config_path.exists() {
 		std::fs::create_dir_all(&config_path)?;
-	}
+	};
 	let config_file = config_path.join("config.toml");
 	if !config_file.exists() {
 		new_config(&config_path)?;
@@ -314,12 +319,34 @@ fn real_main() -> Err<()> {
 	}
 }
 
-/// determines the default config path based on XDG_CONFIG_HOME or HOME environment variables
+/// resolves the default config path based on specific platform.
 fn default_config_path() -> Err<PathBuf> {
-	let xdg_config = std::env::var("XDG_CONFIG_HOME").ok();
-	if let Some(c) = xdg_config {
-		Ok(PathBuf::from(c).join("ran"))
-	} else {
-		Ok(PathBuf::from(std::env::var("HOME").map_err(|_| LE::Other("unable to find a suitable default config directory. ($HOME and $XDG_CONFIG_HOME are both invalid/unset)".into()))?).join("config/ran"))
-	}
+	#[cfg(target_os = "windows")]
+    {
+        env::var("APPDATA")
+            .map(PathBuf::from)
+            .map(|p| p.join("ran"))
+            .map_err(|_| LE::Other("APPDATA not set".into()))
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        env::var("HOME")
+            .map(PathBuf::from)
+            .map(|p| p.join("Library").join("Application Support").join("ran"))
+            .map_err(|_| LE::Other("HOME not set".into()))
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let xdg = env::var("XDG_CONFIG_HOME").ok();
+        if let Some(c) = xdg {
+            Ok(PathBuf::from(c).join("ran"))
+        } else {
+            env::var("HOME")
+                .map(PathBuf::from)
+                .map(|p| p.join(".config").join("ran"))
+                .map_err(|_| LE::Other("Could not find HOME or XDG_CONFIG_HOME".into()))
+        }
+    }
 }

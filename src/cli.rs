@@ -21,7 +21,7 @@ pub struct Cli {
 	#[arg(
 		long,
 		env = "RANCFG",
-		help = "defaults to $XDG_CONFIG_HOME/ran or $HOME/.config/ran",
+		help = "defaults to (your platform's app data directory)/ran",
 		long_help = "path for config files (e.g. general config or app list)",
 	)]
 	pub config: Option<PathBuf>,
