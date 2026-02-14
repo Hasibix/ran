@@ -128,7 +128,7 @@ jobs:
               uses: actions/download-artifact@v7
               with:
                   pattern: release-artifacts-*
-                  merge-multiple: true
+                  merge-multiple: false
                   path: artifacts
 
             - name: Merge all OS artifacts
