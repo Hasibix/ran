@@ -136,8 +136,9 @@ jobs:
               uses: ncipollo/release-action@v1
               with:
                   tag: ${{ steps.get_version.outputs.version }}
-                  release_name: ${{ steps.get_version.outputs.version }}
+                  name: ${{ steps.get_version.outputs.version }}
                   bodyFile: release.md
+                  commit: ${{ github.sha }}
                   draft: true
                   prerelease: false
                   artifacts: "dist/*"
