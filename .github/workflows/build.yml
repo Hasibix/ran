@@ -1,0 +1,108 @@
+name: Build Rust Project
+
+on:
+    workflow_call:
+    workflow_dispatch:
+
+jobs:
+    build:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, windows-latest, macos-latest]
+                include:
+                    - os: ubuntu-latest
+                      targets:
+                          [i686-unknown-linux-gnu, x86_64-unknown-linux-gnu]
+                    - os: windows-latest
+                      targets:
+                          [
+                              i686-pc-windows-msvc,
+                              x86_64-pc-windows-msvc,
+                              aarch64-pc-windows-msvc,
+                          ]
+                    - os: macos-latest
+                      targets: [aarch64-apple-darwin]
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Read version
+              id: get_version
+              shell: bash
+              run: |
+                  VERSION=$(cat version.txt | tr -d " \n\r")
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            - name: Set up Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  profile: minimal
+                  override: true
+
+            - name: Install 32-bit and aarch64 Linux deps
+              if: matrix.os == 'ubuntu-latest'
+              shell: bash
+              run: |
+                  sudo dpkg --add-architecture i386
+                  sudo apt update
+                  sudo apt install -y gcc-multilib g++-multilib libc6-dev-i386
+
+            - name: Install Rust targets
+              shell: bash
+              run: |
+                  for t in ${{ join(matrix.targets, ' ') }}; do
+                    rustup target add $t
+                  done
+
+            - name: Build targets
+              shell: bash
+              run: |
+                  for t in ${{ join(matrix.targets, ' ') }}; do
+                    cargo build --release --target $t
+                  done
+
+            - name: Package artifacts
+              shell: bash
+              run: |
+                  mkdir -p dist
+                  BIN_NAME=ran
+                  for t in ${{ join(matrix.targets, ' ') }}; do
+                    case "$t" in
+                      *windows-msvc)
+                        BIN="${BIN_NAME}.exe"
+                        case "$t" in
+                          i686-pc-windows-msvc) ARCH="windows_x86" ;;
+                          x86_64-pc-windows-msvc) ARCH="windows_x86_64" ;;
+                          aarch64-pc-windows-msvc) ARCH="windows_aarch64" ;;
+                        esac
+                        powershell.exe -NoProfile -Command "Compress-Archive -Path 'target/$t/release/$BIN' -DestinationPath 'dist/ran_${ARCH}.zip' -Force"
+                        ;;
+                      *unknown-linux-gnu)
+                        BIN="$BIN_NAME"
+                        case "$t" in
+                          i686-unknown-linux-gnu) ARCH="linux_x86" ;;
+                          x86_64-unknown-linux-gnu) ARCH="linux_x86_64" ;;
+                          aarch64-unknown-linux-gnu) ARCH="linux_aarch64" ;;
+                        esac
+                        chmod +x target/$t/release/$BIN
+                        tar -czf dist/ran_${ARCH}.tar.gz -C target/$t/release $BIN
+                        ;;
+                      *apple-darwin)
+                        BIN="$BIN_NAME"
+                        ARCH="macos_aarch64"
+                        chmod +x target/$t/release/$BIN
+                        mkdir -p dmgroot
+                        cp target/$t/release/$BIN dmgroot/
+                        hdiutil create dist/ran_${ARCH}.dmg -fs HFS+ -srcfolder dmgroot
+                        ;;
+                    esac
+                  done
+
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v6
+              with:
+                  name: release-artifacts-${{ matrix.os }}
+                  path: dist/*
