@@ -147,13 +147,14 @@ impl Launcher {
 			cmd.args(final_args)
 				.stdin(Stdio::null())
 				.stdout(Stdio::null())
-				.stderr(Stdio::null());
+				.stderr(Stdio::null())
+				.current_dir(std::env::current_dir()?);
 			// spawn and immediately forget
 			let _ = cmd.spawn();
 			println!("launched app {} in background!", name);
 		} else {
 			let mut cmd = Command::new(final_bin);
-			cmd.args(final_args).envs(final_env);
+			cmd.args(final_args).envs(final_env).current_dir(std::env::current_dir()?);
 			// wait for exit
 			println!("launching app {}...", name);
 			let status = cmd.status()?;

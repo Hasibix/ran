@@ -6,7 +6,7 @@ use std::path::PathBuf;
 /// ran - run anything now
 ///
 /// a simple but customizable command-line launcher for games and programs.
-/// 
+///
 /// copyright (c) 2026 Hasibix Hasi.
 /// licensed under Apache 2.0.
 #[derive(Parser)]
