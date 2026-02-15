@@ -1,8 +1,24 @@
 [package]
-name = "ran"
+name = "ran-launcher"
 description="ran - run anything now"
 version = "1.0.2"
 edition = "2024"
+authors = ["Hasibix Hasi"]
+license = "Apache-2.0"
+repository = "https://github.com/Hasibix/ran"
+readme = "readme.md"
+keywords = [
+    "cli",
+    "launcher",
+    "tool",
+    "command-line",
+    "utility"
+]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "ran"
+path = "src/main.rs"
 
 [dependencies]
 atty = "0.2.14"
