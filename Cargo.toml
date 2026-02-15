@@ -15,6 +15,12 @@ keywords = [
     "utility"
 ]
 categories = ["command-line-utilities"]
+include = [
+    "src/**",
+    "Cargo.toml",
+    "readme.md",
+    "license*"
+]
 
 [[bin]]
 name = "ran"
