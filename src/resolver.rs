@@ -25,6 +25,11 @@ impl<'a> Resolver<'a> {
 	/// resolves the commands executable, arguments, and environment variables
 	/// supports nested runners (bin starting with '@')
 	pub fn resolve_command(&self, app: &App, command: &str) -> Result<ResolvedParts> {
+		let mut stack = Vec::new();
+		self.resolve_command_inner(&mut stack, app, command)
+	}
+
+	fn resolve_command_inner(&self, stack: &mut Vec<String>, app: &App, command: &str) -> Result<ResolvedParts> {
 		let cmd = app.cmds.get(command)
 			.ok_or(anyhow!("command not found: '{command}'"))?;
 
@@ -40,8 +45,17 @@ impl<'a> Resolver<'a> {
 				_ => bail!("invalid runner '{}'", cmd.bin),
 			};
 
+			if stack.iter().any(|s| s == runner_name) {
+				stack.push(runner_name.to_string());
+				bail!(
+					"infinite recursion on runner app resolution. stack: {}",
+					stack.join(" -> ")
+				)
+			}
+			stack.push(runner_name.to_string());
+
 			let runner_app = self.launcher.load_app(runner_name)?;
-			self.resolve_command(&runner_app, sub_command)?
+			self.resolve_command_inner(stack, &runner_app, sub_command)?
 		} else {
 			// base case
 			ResolvedParts {
