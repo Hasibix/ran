@@ -232,7 +232,7 @@ impl CommandHandler {
 				if let Some(alias) = &l.config.alias {
 					println!("list of all specified app aliases");
 					for name in alias.keys() {
-						let chain_result = resolver.resolve_alias_chain(&name);
+						let chain_result = resolver.resolve_alias_chain(&name.trim());
 						let pretty_chain = match chain_result {
 							Ok(chain) => {
 								// if there’s no chain, just print the key
@@ -248,21 +248,21 @@ impl CommandHandler {
 												// first in chain gets bold magenta
 												item.bright_magenta().bold().to_string()
 											} else if i == len - 1 {
-												// last in chain gets green
-												item.bright_green().to_string()
+												// last in chain gets yellow
+												item.bright_yellow().to_string()
 											} else {
 												item.bright_magenta().bold().to_string()
 											}
 										})
 										.collect::<Vec<_>>()
-										.join(&(" -> ".bright_black().to_string()))
+										.join(&" -> ".bright_black().to_string())
 								}
 							}
 							Err(e) => {
 								format!(
 									"{} -> {e}",
-									&(name.bright_magenta().bold().to_string())
-								)
+									name.bright_magenta().bold().to_string()
+								).to_string()
 							}
 						};
 						println!("{pretty_chain}");
@@ -278,9 +278,8 @@ impl CommandHandler {
 				let chain_result = resolver.resolve_alias_chain(&key);
 				let pretty_chain = match chain_result {
 					Ok(chain) => {
-						// if there’s no chain, just print the key
 						if chain.is_empty() {
-							key.bright_magenta().bold().to_string()
+							bail!("undefined app alias '{key}'");
 						} else {
 							let len = chain.len();
 							chain
@@ -291,8 +290,8 @@ impl CommandHandler {
 										// first in chain gets bold magenta
 										item.bright_magenta().bold().to_string()
 									} else if i == len - 1 {
-										// last in chain gets green
-										item.bright_green().to_string()
+										// last in chain gets yellow
+										item.bright_yellow().to_string()
 									} else {
 										item.bright_magenta().bold().to_string()
 									}

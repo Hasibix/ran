@@ -187,6 +187,10 @@ impl<'a> Resolver<'a> {
 			current = next;
 		}
 
+		if chain.len() < 2 {
+			bail!("invalid alias '{start_key}'")
+		}
+
 		Ok(chain)
 	}
 }

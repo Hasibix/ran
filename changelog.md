@@ -1,3 +1,7 @@
+# Version 2.0.1
+* fixed alias chain resolving for `ran alias list` and `ran alias get <alias>`.
+* fixed a bug in which `ran config set alias.KEY` would set to `config.env` map instead of `config.alias` map.
+
 # Version 2.0.0
 * complete overhaul of ran's internal architecture; ~60% rewrite of the codebase.
 * centralized CLI handling in `handler.rs`, drastically reducing `main.rs` size and spaghetti code.

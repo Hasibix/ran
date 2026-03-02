@@ -1,7 +1,7 @@
 [package]
 name = "ran-launcher"
 description="ran - run anything now"
-version = "2.0.0"
+version = "2.0.1"
 edition = "2024"
 authors = ["Hasibix Hasi"]
 license = "Apache-2.0"
@@ -19,6 +19,7 @@ include = [
 	"res/**",
 	"src/**",
 	"Cargo.toml",
+	"contributing.md",
 	"readme.md",
 	"license*"
 ]

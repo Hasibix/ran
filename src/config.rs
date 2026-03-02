@@ -150,7 +150,7 @@ impl Config {
 				.ok_or(anyhow!("parse error: '{value}' is not a boolean"))?,
 
 			["alias", k] => {
-				let alias = self.env.get_or_insert_default();
+				let alias = self.alias.get_or_insert_default();
 				alias.insert((*k).to_string(), value);
 			}
 
