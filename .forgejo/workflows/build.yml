@@ -26,7 +26,7 @@ jobs:
                   dpkg --add-architecture i386
                   apt update
                   apt install -y \
-                    curl
+                    curl \
                     gcc-multilib g++-multilib libc6-dev-i386 \
                     gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 \
                     zip unzip tar
