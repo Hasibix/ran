@@ -5,11 +5,11 @@ on:
 
 jobs:
     build:
-        runs-on: codeberg-medium
+        runs-on: codeberg-tiny
         uses: ./.forgejo/workflows/build.yml
 
     release:
-        runs-on: codeberg-medium
+        runs-on: codeberg-small
         needs: build
         permissions:
             contents: write
