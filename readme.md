@@ -47,7 +47,7 @@ cargo build --release # for just building the executable
 alternatively, you can download the latest release from the [releases page](https://codeberg.org/hasibix/ran/releases/latest) and add it to your `PATH`, or run it from the directory you downloaded it into.
 
 > NOTE:
-> macOS builds are currently not being released due to complexity of cross-compiling from Linux to macOS. if you're on macOS, you can either use `cargo install` or build from source, which compiles ran on your machine.
+> macOS builds are currently not being released due to complexity of cross-compiling from Linux to macOS. if you're on macOS, you can either use `cargo install` or build from source, both of which compiles ran on your machine.
 
 ---
 
