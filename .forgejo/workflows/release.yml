@@ -39,9 +39,9 @@ jobs:
             - name: Create Release
               uses: actions/forgejo-release@v2
               with:
+                  direction: upload
                   tag: ${{ steps.get_version.outputs.version }}
                   title: ${{ steps.get_version.outputs.version }}
-                  note-file: release.md
-                  draft: true
+                  release-notes-file: release.md
                   prerelease: false
                   release-dir: dist
