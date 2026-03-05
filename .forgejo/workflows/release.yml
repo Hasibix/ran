@@ -16,6 +16,8 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
 
             - name: Read version
               id: get_version
@@ -23,14 +25,14 @@ jobs:
                   echo "::set-output $(cat version.txt | tr -d " \n\r")"
 
             - name: Download build artifacts
-              uses: actions/download-artifact@v4
+              uses: forgejo/download-artifact@v4
               with:
                   pattern: release-artifacts-*
                   path: dist
                   merge-multiple: true
 
             - name: Create Release
-              uses: https://codeberg.org/actions/forgejo-release@v2
+              uses: actions/forgejo-release@v2
               with:
                   tag: ${{ steps.get_version.outputs.version }}
                   title: ${{ steps.get_version.outputs.version }}
