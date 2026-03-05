@@ -15,7 +15,7 @@ jobs:
                     - i686-pc-windows-gnu
                     - x86_64-pc-windows-gnu
         env:
-            PATH: $HOME/.cargo/bin:${{ forgejo.env.PATH }}
+            PATH: $HOME/.cargo/bin:${{ env.PATH }}
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
