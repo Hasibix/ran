@@ -8,7 +8,7 @@ jobs:
         uses: ./.forgejo/workflows/build.yml
 
     release:
-        runs-on: ubuntu-latest
+        runs-on: codeberg-medium
         needs: build
         permissions:
             contents: write
