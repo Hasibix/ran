@@ -1,7 +1,7 @@
 # ran
 
 [![crates.io](https://img.shields.io/crates/v/ran-launcher.svg)](https://crates.io/crates/ran-launcher)
-[![forgejo actions](https://codeberg.org/hasibix/ran/actions/workflows/release.yml/badge.svg)](https://codeberg.org/hasibix/ran/actions/workflows/release.yml)
+[![forgejo actions](https://codeberg.org/hasibix/ran/actions/workflows/release.yml/badge.svg)](https://codeberg.org/hasibix/ran/actions?workflow=release.yml)
 
 ran (pronounced "rAen"), short for "Run Anything Now", is a command-line launcher for games and applications. it uses toml-based application definition files to define how to launch programs and supports features like per-app commands, variables, environment overrides, and more.
 
