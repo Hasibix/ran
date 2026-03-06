@@ -252,4 +252,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
-for more details, consult the [license file](https://codeberg.org/hasibix/ran/src/branch/main/license).
+for more details, consult the [license file](https://codeberg.org/hasibix/ran/src/branch/main/license.txt).
